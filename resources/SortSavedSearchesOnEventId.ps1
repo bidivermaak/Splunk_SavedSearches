@@ -1,5 +1,19 @@
 ﻿$WebResponse = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dstaulcu/Splunk_SavedSearches/master/savedsearches.conf"
 
+$content = "$env:temp\tmpSavedSearches.txt"
+$content_eventdesc = "$env:temp\tmpEventDescriptions.csv"
+if (Test-Path -path $content)  { Remove-Item -Path $content -Force }
+if (Test-Path -path $content_eventdesc)  { Remove-Item -Path $content_eventdesc -Force }
+
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]'Tls,Tls11,Tls12'
+
+$source = "https://raw.githubusercontent.com/dstaulcu/Splunk_SavedSearches/master/resources/Windows%208%20and%20Windows%20Server%202012%20Security%20Event%20Descriptions.csv"
+$Filename = [System.IO.Path]::GetFileName($source)
+$dest = $content_eventdesc
+$wc = New-Object System.Net.WebClient
+$wc.DownloadFile($source, $dest)
+
+
 if ($WebResponse.StatusDescription -ne "OK") {
     write-host "Unexpected response to web request. Exiting."
     exit
@@ -36,18 +50,35 @@ foreach ($line in $lines) {
 
 }
 
+<#
 # sort the list object by event code
-# print the ordered results (to clipboard)
-# paste clipboard back into github
-
 $SavedSearches = $SavedSearches | Sort-Object -Property SourceType, EventCode 
 
-$content = "$env:temp\tmpfile.txt"
-if (Test-Path -path $content)  { Remove-Item -Path $content -Force }
-
+# write ordered list to file
 foreach ($search in $SavedSearches) {
     write-host "$($search.sourcetype):$($search.EventCode)"
     Add-Content -Path $content -Value "`n$($search.search)"
+}
+
+# put ordered list file content in clipboard
+Get-Content -Path $content | clip
+#>
+
+# create to do sections for any missing events
+$content_eventdesc = Import-Csv -Path $content_eventdesc
+
+foreach ($item in $content_eventdesc) {
+    $search = "`n[$($item.Category):$($item.SubCategory):$($item.'Event ID') - $($item.'Message Summary')]`nsearch = sourcetype=`"WinEventLog:Security`" EventCode=`"$($item.'Event ID')`"`n"
+
+    $MatchingSearch = $savedsearches | where-object {$_.EventCode -eq $item.'event id'}
+    if (!($MatchingSearch)) {
+        $search += "| TODO"
+    } else {
+        $matchingsearchdata = ($MatchingSearch.search -split "EventCode\s*=\s*`"?\d+`"?\s*")[1]
+        $search += "$($matchingsearchdata)"
+    }
+
+    Add-Content -Path $content -Value $search
 }
 
 Get-Content -Path $content | clip
