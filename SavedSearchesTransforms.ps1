@@ -74,10 +74,10 @@ foreach ($expression in $expressions) {
         $reports = "$($reports), $($report)"
     }
 
-    Add-Content -Path $transforms -Value "`n#$($expression)"   
+    Add-Content -Path $transforms -Value "`n"   
     Add-Content -Path $transforms -Value "[$($report)]"
     Add-Content -Path $transforms -Value "SOURCE_KEY = _raw"
-    Add-Content -Path $transforms -Value "REGEX = $($expression)"  
+    Add-Content -Path $transforms -Value "REGEX = $($expression)[\r\n]{2}"  
     Add-Content -Path $transforms -Value "FORMAT = $($formatcontent)"
 
 }
