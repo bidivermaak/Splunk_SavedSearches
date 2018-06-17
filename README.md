@@ -7,8 +7,6 @@ Mitigation:
 To overcome this challenge, I’ve started to curate specialized field extractions for EventCode messages in the windows security log. Eventually I will package this collection of extractions, currently stored in the form of [savedsearches](https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/savedsearches.conf)
 , as a Splunk App published to SplunkBase.
 
-![alt tag](https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/screenshot.gif)
-
 The following [PowerShell script](https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/SavedSearchesTransforms.ps1) converts the savedsearches.conf on GitHub into [props.conf](https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/props.conf) and [transforms.conf](https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/transforms.conf) files in temp which can be used to enable automatic field extraction at search time. 
 
 
