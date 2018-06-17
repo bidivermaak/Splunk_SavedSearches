@@ -8,3 +8,8 @@ To overcome this challenge, I’ve started to curate specialized field extractio
 , as a Splunk App published to SplunkBase.
 
 ![alt tag](https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/screenshot.gif)
+
+The following [PowerShell script] (https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/SavedSearchesTransforms.ps1) converts the savedsearches.conf from GitHub into [props.conf](https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/props.conf) and [transforms] (https://github.com/dstaulcu/Splunk_SavedSearches/blob/master/tranforms.conf) files in temp which can be used to enable automatic field extraction at search time. 
+
+
+
