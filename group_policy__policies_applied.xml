@@ -1,0 +1,96 @@
+<form>
+  <label>Group Policy - Policies Applied to Client</label>
+  <fieldset submitButton="true" autoRun="false">
+    <input type="text" token="host" searchWhenChanged="true">
+      <label>host filter</label>
+      <default>splunk-dev</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Drilldown links to associated active directory group policy object's modification history</title>
+      <input type="time" token="field3" searchWhenChanged="true">
+        <label></label>
+        <default>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <table>
+        <title>Group Policy Object Application History</title>
+        <search>
+          <query>host="$host$" sourcetype="WinEventLog:Security" EventCode="6144" 
+| rex "Message=(?&lt;summary&gt;[^\r\n]*)\." 
+| rex "Return Code:\s+(?&lt;Return_Code&gt;[^\r\n]*)" 
+| rex "GPO List:\s+(?&lt;GPO_List&gt;(.|\s)*)" 
+| table _time, host, sourcetype, EventCode, summary,
+    Return_Code,
+    GPO_List 
+| rex mode=sed field=GPO_List "s/\n/|/g" 
+| eval GPO_List = split(GPO_List,"|") 
+| eval GPO_List = mvsort(GPO_List) 
+| mvexpand GPO_List 
+| rex field=GPO_List "(?&lt;Obj_GUID&gt;{\S+})\s+(?&lt;Obj_Name&gt;.*)" 
+| table _time, host, sourcetype, EventCode, summary, Obj_Name, Obj_GUID, Return_Code
+| stats earliest(_time) as first_seen, latest(_time) as last_seen, count as apply_count by host, Obj_Name, Obj_GUID
+| eval first_seen=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| eval last_seen=strftime(last_seen,"%Y-%m-%d %H:%M:%S")</query>
+          <earliest>$field3.earliest$</earliest>
+          <latest>$field3.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <link target="_blank">/app/search/group_policy__object_management?form.Obj_DN=*$row.Obj_GUID$*</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <input type="time" token="field2">
+        <label></label>
+        <default>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <table>
+        <title>Group Policy Application Event Details</title>
+        <search>
+          <query>host="$host$" sourcetype="WinEventLog:Security" EventCode="6144" 
+| rex "Message=(?&lt;summary&gt;[^\r\n]*)\." 
+| rex "Return Code:\s+(?&lt;Return_Code&gt;[^\r\n]*)" 
+| rex "GPO List:\s+(?&lt;GPO_List&gt;(.|\s)*)" 
+| table _time, host, sourcetype, EventCode, summary,
+    Return_Code,
+    GPO_List 
+| rex mode=sed field=GPO_List "s/\n/|/g" 
+| eval GPO_List = split(GPO_List,"|") 
+| eval GPO_List = mvsort(GPO_List) 
+| mvexpand GPO_List 
+| rex field=GPO_List "(?&lt;Obj_GUID&gt;{\S+})\s+(?&lt;Obj_Name&gt;.*)" 
+| table _time, host, sourcetype, EventCode, summary, Obj_Name, Obj_GUID, Return_Code
+| sort - _time</query>
+          <earliest>$field2.earliest$</earliest>
+          <latest>$field2.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>

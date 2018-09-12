@@ -1,0 +1,47 @@
+<form>
+  <label>Group Policy - Object Permission Changes</label>
+  <fieldset submitButton="false">
+    <input type="time" token="field1">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>host="splunk-dev" sourcetype="WinEventLog:Security" EventCode="5136" nTSecurityDescriptor
+| rex "Message=(?&lt;summary&gt;[^\r\n]*)\." 
+| rex "Subject:\s+Security ID:\s+(?&lt;Subject_SID&gt;[^\r\n]*)\s+Account Name:\s+(?&lt;Subject_Account_Name&gt;[^\r\n]*)\s+Account Domain:\s+(?&lt;Subject_Account_Domain&gt;[^\r\n]*)\s+Logon ID:\s+(?&lt;Subject_Logon_ID&gt;[^\r\n]*)" 
+| rex "Directory Service:\s+Name:\s+(?&lt;DS_Name&gt;[^\r\n]*)\s+Type:\s+(?&lt;DS_Type&gt;[^\r\n]*)" 
+| rex "Object:\s+DN:\s+(?&lt;Obj_DN&gt;[^\r\n]*)\s+GUID:\s+(?&lt;Obj_GUID&gt;[^\r\n]*)\s+Class:\s+(?&lt;Obj_Class&gt;[^\r\n]*)" 
+| rex "Attribute:\s+LDAP Display Name:\s+(?&lt;Attr_LDAP_Display_Name&gt;[^\r\n]*)\s+Syntax \(OID\):\s+(?&lt;Attr_OID&gt;[^\r\n]*)\s+Value:\s+(?&lt;Attr_Value&gt;[^\r\n]*)" 
+| rex "Operation:\s+Type:\s+(?&lt;Op_Type&gt;[^\r\n]*)\s+Correlation ID:\s+(?&lt;Op_Corr_ID&gt;[^\r\n]*)\s+Application Correlation ID:\s+(?&lt;Op_App_Corr_ID&gt;[^\r\n]*)" 
+| search Attr_LDAP_Display_Name="nTSecurityDescriptor"
+| rex field=Attr_Value ";(?&lt;Impacted_SID&gt;S[0-9-]+)"
+| table _time host EventCode summary 
+    Subject_Account_Name Subject_Account_Domain 
+    DS_Name  
+    Obj_DN Obj_GUID Obj_Class 
+    Attr_LDAP_Display_Name Attr_OID Attr_Value 
+    Op_Type Impacted_SID
+|  sort - _time</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>
